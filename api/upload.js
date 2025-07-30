@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -9,17 +10,33 @@ export default async function handler(req, res) {
     const { image } = req.body;
     if (!image) return res.status(400).json({ error: 'No image received' });
 
-    // Remove Base64 header
+    // ✅ Remove Base64 header
     const base64Data = image.replace(/^data:image\/png;base64,/, "");
 
-    // Save snapshot to the Vercel server's temporary folder
-    const filePath = `/tmp/snapshot_${Date.now()}.png`;
+    // ✅ CHANGE THIS TO YOUR ACTUAL DOWNLOADS FOLDER PATH
+    // ⚠️ On Windows use double backslashes \\ 
+    // Example for Windows:
+    // const downloadsPath = 'C:\\Users\\YourUsername\\Downloads';
+    // Example for Mac/Linux:
+    // const downloadsPath = '/Users/YourUsername/Downloads';
+
+    const downloadsPath = '/Users/utkarshsharma/Downloads';  // <-- CHANGE THIS
+
+    // ✅ Ensure Downloads folder exists (if not, create it)
+    if (!fs.existsSync(downloadsPath)) {
+      fs.mkdirSync(downloadsPath, { recursive: true });
+    }
+
+    // ✅ Create unique filename
+    const fileName = `snapshot_${Date.now()}.png`;
+    const filePath = path.join(downloadsPath, fileName);
+
+    // ✅ Save snapshot directly to your Downloads folder
     fs.writeFileSync(filePath, base64Data, 'base64');
 
     console.log('✅ Image saved to:', filePath);
+    res.status(200).send(`✅ Image saved locally: ${filePath}`);
 
-    // For now, just confirm receipt (later we can email or push it somewhere)
-    res.status(200).send('✅ Image received & saved temporarily');
   } catch (err) {
     console.error('❌ Error:', err);
     res.status(500).send('❌ Server error saving image');
